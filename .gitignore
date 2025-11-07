@@ -1,0 +1,16 @@
+# The disposable "toolbox"
+venv/
+
+# The simulation's temporary files
+sim_build/
+
+# Any wave files
+*.fst
+*.vcd
+
+# The cocotb test results
+results.xml
+
+# Python's junk
+__pycache__/
+*.pyc
