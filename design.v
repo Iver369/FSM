@@ -1,4 +1,4 @@
-module traffic_light(clk, rst, light); 
+module traffic_light_fsm(clk, rst, light); 
     input wire clk; // clock input
     input wire rst; // active-high reset input
     output reg [2:0] light; // 3-bit output representing visible color
