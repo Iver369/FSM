@@ -1,19 +1,20 @@
 import cocotb
 from cocotb.triggers import RisingEdge, Timer
+from cocotb.clock import Clock
 
 @cocotb.test()
 async def test_fsm_sequence(dut):
-    dut.clk.value = 0 # start clock low
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start()) # drive clock to tick every 10ns
     dut.rst.value = 1 # assert reset
-    await Timer(5, units="ns") # wait 5ns for reset duration
+    await Timer(5, unit="ns") # hold reset for clean initialization
     dut.rst.value = 0 # deassert reset to start fsm
+    await RisingEdge(dut.clk) # synchronizes by ensuring dut samples rst=0 exactly on clock edge
 
-    expected_sequence = [0b100, 0b110, 0b001, 0b010, 0b100] # array with red, red_amber, green, and amber in binary
-    for i, expected in enumerate(expected_sequence): # for loop to verify fsm output
-        dut.clk.value = 1 # rising edge
-        await Timer(5, units="ns") # wait 5ns
-        dut.clk.value = 0 # falling edge
-        await Timer(5, units="ns") # wait 5ns 
-        assert int(dut.light.value) == expected, f"Step {i}: expected {expected:03b}, got {int(dut.light.value):03b}" # compare output values (decimal -> binary)
-        dut._log.info(f"Cycle {i}: light = {int(dut.light.value):03b}") # print debug log info
-
+    waits = [60, 2, 50, 3] # amount of ticks per state
+    expect = [0b100, 0b110, 0b001, 0b010] # array with red, red_amber, green, and amber in binary
+    for step, (state_clks, exp) in enumerate(zip(waits, expect)): # for loop to verify fsm output
+        for _ in range(state_clks): # loops for the number of clock cycles in each state
+            await RisingEdge(dut.clk) # wait for rising edge of clock
+        assert int(dut.light.value) == exp # checks if light output matches expected value
+        got = int(dut.light.value) # captures value for logging
+        dut._log.info(f"state {step}: exp {exp:03b} got {got:03b} {'OK' if got == exp else 'FAIL'}") # log expected vs got values

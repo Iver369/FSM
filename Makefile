@@ -1,6 +1,11 @@
 # Simulator
 SIM = icarus
 
+# Automatically enable simulation timing
+ifeq ($(SIM),icarus)
+  COMPILE_ARGS += -DSIMULATION
+endif
+
 # Design files
 TOPLEVEL_LANG = verilog
 VERILOG_SOURCES = design.v
